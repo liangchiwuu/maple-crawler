@@ -21,7 +21,6 @@ def extract_name(raw_data):
     pattern = re.compile("現正播放：.*\",")
     song_name = pattern.findall(raw_data)[0].replace("現正播放：", "").replace("\",", "")
     song_name = file_name_filter(song_name)
-    song_name = song_name.decode('utf-8')
     return song_name
 
 
@@ -42,12 +41,13 @@ def extract_base64_audio(raw_data):
 def extract_file_address(raw_data):
     pattern = re.compile("<source src=\".*\" type=\"audio")
     audio_content = pattern.findall(raw_data)[0].replace("<source src=\"", "").replace("\" type=\"audio", "")
+    audio_content = audio_content.replace(" ", "%20")
     return audio_content
 
 
 """
 def generate_random_string(size=16, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
+    return "".join(random.choice(chars) for _ in range(size))
 """
 
 
@@ -58,6 +58,7 @@ def is_base64(data):
 
 
 def save_audio(audio_name, audio_content, directory):
+    audio_name = audio_name.decode("utf-8")
     audio_file = open(os.path.join(directory, audio_name) + ".mp3", "wb")
     audio_file.write(audio_content)
     audio_file.close()
@@ -67,7 +68,7 @@ def crawl_maple():
     random_audio_url = "https://maplebgm.tk/bgmplayer_rand.php"
     direct_file_url = "https://maplebgm.tk/"
     save_to_directory = "maple-bgm"
-    error_log_file = "fail_log.txt"
+    error_log_name = "fail_log.txt"
 
     # check directory
     if not os.path.exists(save_to_directory):
@@ -84,7 +85,7 @@ def crawl_maple():
             time.sleep(210)
             continue
 
-        # get audio name and decode
+        # get audio name
         # TODO handle duplicate file name
         audio_name = extract_name(raw_data)
 
@@ -107,11 +108,10 @@ def crawl_maple():
             except:
                 # failed to get audio file, record in log
                 # traceback.print_exc(file=sys.stdout)
-                text_file = open(error_log_file, "a")
-                message = "Failed to download", audio_name, "from", audio_address
-                text_file.write(message)
-                text_file.write("\n")
-                text_file.close()
+                error_log = open(error_log_name, "a")
+                error_log.write("Failed to download " + audio_name + " from " + direct_file_url + audio_address)
+                error_log.write("\n")
+                error_log.close()
 
         # randomly sleep a few seconds
         time.sleep(random.uniform(13, 35))
