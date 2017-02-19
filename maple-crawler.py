@@ -35,7 +35,8 @@ def file_name_filter(name_string):
 def extract_base64_audio(raw_data):
     pattern = re.compile("mpeg;base64,.*\" type=\"audio")
     audio_content = pattern.findall(raw_data)[0].replace("mpeg;base64,", "").replace("\" type=\"audio", "")
-    return base64.b64decode(audio_content)
+    audio_content = base64.b64decode(audio_content)
+    return audio_content
 
 
 def extract_file_address(raw_data):
@@ -91,10 +92,8 @@ def crawl_maple():
 
         # handle base64
         if is_base64(raw_data):
-            # get audio content and decode
+            # get audio save to local
             audio_content = extract_base64_audio(raw_data)
-
-            # save audio
             save_audio(audio_name, audio_content, save_to_directory)
             print "Download", audio_name, "complete."
 
@@ -102,6 +101,7 @@ def crawl_maple():
         else:
             audio_address = extract_file_address(raw_data)
             try:
+                # get audio and save to local
                 audio_content = query_data(direct_file_url + audio_address)
                 save_audio(audio_name, audio_content, save_to_directory)
                 print "Download", audio_name, "complete."
