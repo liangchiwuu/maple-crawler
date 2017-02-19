@@ -92,7 +92,7 @@ def crawl_maple():
 
         # handle base64
         if is_base64(raw_data):
-            # get audio save to local
+            # get audio and save to local
             audio_content = extract_base64_audio(raw_data)
             save_audio(audio_name, audio_content, save_to_directory)
             print "Download", audio_name, "complete."
