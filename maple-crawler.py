@@ -4,13 +4,14 @@ import time
 import urllib2
 import random
 import re
-import string
+import sys
+import traceback
+import os
+import base64
 
 
 def query_data(request_url):
-    # query data
-    url = request_url
-    remote_file = urllib2.urlopen(url)
+    remote_file = urllib2.urlopen(request_url)
     data = remote_file.read()
     remote_file.close()
     return data
@@ -19,39 +20,102 @@ def query_data(request_url):
 def extract_name(raw_data):
     pattern = re.compile("現正播放：.*\",")
     song_name = pattern.findall(raw_data)[0].replace("現正播放：", "").replace("\",", "")
+    song_name = file_name_filter(song_name)
+    song_name = song_name.decode('utf-8')
     return song_name
 
 
-def save_to_txt(file_name, data):
-    text_file = open(file_name + ".txt", "w")
-    text_file.write(data)
-    text_file.close()
+def file_name_filter(name_string):
+    name_string = name_string.replace("/", "／").replace("\\", "")
+    name_string = name_string.replace(">", "＞").replace("<", "＜")
+    name_string = name_string.replace(":", "：").replace("?", "？")
+    name_string = name_string.replace("*", "＊").replace("\"", "＂")
+    return name_string
 
 
-def download_maple():
+def extract_base64_audio(raw_data):
+    pattern = re.compile("mpeg;base64,.*\" type=\"audio")
+    audio_content = pattern.findall(raw_data)[0].replace("mpeg;base64,", "").replace("\" type=\"audio", "")
+    return base64.b64decode(audio_content)
+
+
+def extract_file_address(raw_data):
+    pattern = re.compile("<source src=\".*\" type=\"audio")
+    audio_content = pattern.findall(raw_data)[0].replace("<source src=\"", "").replace("\" type=\"audio", "")
+    return audio_content
+
+
+"""
+def generate_random_string(size=16, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+"""
+
+
+def is_base64(data):
+    pattern = re.compile("mpeg;base64,.*\" type=\"audio")
+    findings = pattern.findall(data)
+    return len(findings) > 0
+
+
+def save_audio(audio_name, audio_content, directory):
+    audio_file = open(os.path.join(directory, audio_name) + ".mp3", "wb")
+    audio_file.write(audio_content)
+    audio_file.close()
+
+
+def crawl_maple():
+    random_audio_url = "https://maplebgm.tk/bgmplayer_rand.php"
+    direct_file_url = "https://maplebgm.tk/"
+    save_to_directory = "maple-bgm"
+    error_log_file = "fail_log.txt"
+
+    # check directory
+    if not os.path.exists(save_to_directory):
+        os.makedirs(save_to_directory)
+
     while True:
+        # query random raw data
         try:
-            raw_data = query_data("https://maplebgm.tk/bgmplayer_rand.php")
+            raw_data = query_data(random_audio_url)
         except:
-            time.sleep(210)
+            # failed to retrieve data, wait a bit then try again
+            # traceback.print_exc(file=sys.stdout)
             print "Failed to open URL, reconnecting..."
+            time.sleep(210)
             continue
-        song_name = extract_name(raw_data)
-        print "Processing", song_name, "..."
-        try:
-            save_to_txt(song_name.decode('utf-8'), raw_data)
-            print "Download", song_name, "complete."
-        except:
-            backup_name = generate_random_string()
-            save_to_txt(backup_name, raw_data)
-            print "Failed to parse file name, using default name."
-            print "Download", backup_name, "complete."
+
+        # get audio name and decode
+        # TODO handle duplicate file name
+        audio_name = extract_name(raw_data)
+
+        # handle base64
+        if is_base64(raw_data):
+            # get audio content and decode
+            audio_content = extract_base64_audio(raw_data)
+
+            # save audio
+            save_audio(audio_name, audio_content, save_to_directory)
+            print "Download", audio_name, "complete."
+
+        # handle direct file
+        else:
+            audio_address = extract_file_address(raw_data)
+            try:
+                audio_content = query_data(direct_file_url + audio_address)
+                save_audio(audio_name, audio_content, save_to_directory)
+                print "Download", audio_name, "complete."
+            except:
+                # failed to get audio file, record in log
+                # traceback.print_exc(file=sys.stdout)
+                text_file = open(error_log_file, "a")
+                message = "Failed to download", audio_name, "from", audio_address
+                text_file.write(message)
+                text_file.write("\n")
+                text_file.close()
+
+        # randomly sleep a few seconds
         time.sleep(random.uniform(13, 35))
 
 
-def generate_random_string(size=16, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
-
-
 if __name__ == "__main__":
-    download_maple()
+    crawl_maple()
