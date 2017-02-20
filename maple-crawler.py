@@ -66,8 +66,8 @@ def save_audio(audio_name, audio_content, directory):
 
 
 def crawl_maple():
-    random_audio_url = "https://maplebgm.tk/bgmplayer_rand.php"
-    direct_file_url = "https://maplebgm.tk/"
+    random_audio_url = ""
+    direct_file_url = ""
     save_to_directory = "maple-bgm"
     error_log_name = "fail_log.txt"
 
