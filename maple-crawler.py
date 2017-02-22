@@ -9,6 +9,11 @@ import traceback
 import os
 import base64
 
+RANDOM_PLAYER_URL = ""
+DIRECT_FILE_URL = ""
+SAVE_TO_DIRECTORY = "maple-bgm"
+ERROR_LOG = "fail_log.txt"
+
 
 def query_data(request_url):
     remote_file = urllib2.urlopen(request_url)
@@ -66,19 +71,14 @@ def save_audio(audio_name, audio_content, directory):
 
 
 def crawl_maple():
-    random_audio_url = ""
-    direct_file_url = ""
-    save_to_directory = "maple-bgm"
-    error_log_name = "fail_log.txt"
-
     # check directory
-    if not os.path.exists(save_to_directory):
-        os.makedirs(save_to_directory)
+    if not os.path.exists(SAVE_TO_DIRECTORY):
+        os.makedirs(SAVE_TO_DIRECTORY)
 
     while True:
         # query random raw data
         try:
-            raw_data = query_data(random_audio_url)
+            raw_data = query_data(RANDOM_PLAYER_URL)
         except:
             # failed to retrieve data, wait a bit then try again
             # traceback.print_exc(file=sys.stdout)
@@ -94,7 +94,7 @@ def crawl_maple():
         if is_base64(raw_data):
             # get audio and save to local
             audio_content = extract_base64_audio(raw_data)
-            save_audio(audio_name, audio_content, save_to_directory)
+            save_audio(audio_name, audio_content, SAVE_TO_DIRECTORY)
             print "Download", audio_name, "complete."
 
         # handle direct file
@@ -102,14 +102,14 @@ def crawl_maple():
             audio_address = extract_file_address(raw_data)
             try:
                 # get audio and save to local
-                audio_content = query_data(direct_file_url + audio_address)
-                save_audio(audio_name, audio_content, save_to_directory)
+                audio_content = query_data(DIRECT_FILE_URL + audio_address)
+                save_audio(audio_name, audio_content, SAVE_TO_DIRECTORY)
                 print "Download", audio_name, "complete."
             except:
                 # failed to get audio file, record in log
                 # traceback.print_exc(file=sys.stdout)
-                error_log = open(error_log_name, "a")
-                error_log.write("Failed to download " + audio_name + " from " + direct_file_url + audio_address)
+                error_log = open(ERROR_LOG, "a")
+                error_log.write("Failed to download " + audio_name + " from " + DIRECT_FILE_URL + audio_address)
                 error_log.write("\n")
                 error_log.close()
 
