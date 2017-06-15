@@ -9,6 +9,7 @@ import traceback
 import os
 import base64
 
+
 RANDOM_PLAYER_URL = ""
 DIRECT_FILE_URL = ""
 SAVE_TO_DIRECTORY = "maple-bgm"
@@ -70,7 +71,7 @@ def save_audio(audio_name, audio_content, directory):
     audio_file.close()
 
 
-def crawl_maple():
+def main():
     # check directory
     if not os.path.exists(SAVE_TO_DIRECTORY):
         os.makedirs(SAVE_TO_DIRECTORY)
@@ -118,4 +119,4 @@ def crawl_maple():
 
 
 if __name__ == "__main__":
-    crawl_maple()
+    main()
