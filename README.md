@@ -1,18 +1,16 @@
-# maple-tunes-crawler
+# Maple Crawler
+
+[![License](https://img.shields.io/badge/license-GPL%203.0-brightgreen.svg)](./LICENSE)
+![Language](https://img.shields.io/badge/language-Python-blue.svg)
+
+A web crawler for MapleStory music.
 
 ## Overview
 
-Crawl MapleStory bgm from a web player and save as mp3.
+This crawler is used to crawl MapleStory music from a web player at a particular frequency. All activities will be recorded through logging system. Refer to `conf/global_settings.py` for all settings.
 
-## How To Use
+## Usage
 
+``` bash
+$ python maple_crawler.py
 ```
-1. setup all the constants
-2. $ python maple-crawler
-```
-
-Once launched, this crawler will continuously crawl audio from the player at a certain frequency. Errors and fail cases will be recorded in local log file.
-
-## License
-
-GNU General Public License 3.0
